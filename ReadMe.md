@@ -1,3 +1,3 @@
 # Curves
-Author: Maksym Pylypenko
-Email: pylypenm@myumanitoba.ca
+* Author: Maksym Pylypenko
+* Email: pylypenm@myumanitoba.ca
