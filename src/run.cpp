@@ -7,9 +7,10 @@
 #include <iostream>
 #include <vector>
 
-const char* WINDOW_TITLE = "Curves";
+const char* WINDOW_TITLE = "curves";
 const double FRAME_RATE_MS = 1000.0 / 60.0;
 
+//----------------------------------------------------------------------------
 
 // Holds data that will be moved to GPU
 class Geometry {
@@ -17,6 +18,10 @@ public:
 	std::vector<GLfloat> positions;
 	std::vector<GLfloat> colors;
 	std::vector<GLint> indices;
+
+	//GLuint vao;
+	//GLuint vPosition;
+	//GLuint vColor;
 
 	Geometry() {
 		positions = std::vector<GLfloat>();
@@ -45,7 +50,16 @@ public:
 		return indices.size();
 	}
 
-	void load(int vao, GLuint vPosition, GLuint vColor) {
+	//void load()
+	//{
+	//	load(vao, vPosition, vColor);
+	//}
+
+	void load(GLuint vao, GLuint vPosition, GLuint vColor) {
+		//this->vao = vao;
+		//this->vPosition = vPosition;
+		//this->vColor = vColor;
+
 		std::size_t N1 = sizeof(GLfloat) * numElements() * 2;
 		std::size_t N2 = sizeof(GLfloat) * numElements() * 4;
 		std::size_t N3 = N1 + N2;
@@ -70,10 +84,11 @@ public:
 		glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 
 		glEnableVertexAttribArray(vColor);
-		glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(N1));
+		glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(N1));						
 	}
 };
 
+//----------------------------------------------------------------------------
 
 class Point {
 public:
@@ -85,13 +100,19 @@ public:
 	}
 };
 
-// Holds a sequence of points (e.g control points or points that form a curve)
+//----------------------------------------------------------------------------
+
+// Holds a sequence of points (e.g cp points or points that form a curve)
 class Points {
 public:
 	std::vector<Point> points;
 
 	void add(Point p) {
 		points.push_back(p);
+	}
+
+	void remove() {
+		points.pop_back();
 	}
 
 	Point pop() {
@@ -154,22 +175,25 @@ public:
 			curve.add(Point(glm::vec2(currX, currY), glm::vec4(0.9, 0.3, 0.3, 1)));
 		}
 		return curve;
+		
 	}
 
-	//Points RecursiveLerp(Points cp) {
-	//	Points curve;
-	//	for (int i = 1; i < cp.numElements()-1; i++) {
-	//		Points subCurve = Lerp(cp.getPosition(i - 1), cp.getPosition(i), cp.getPosition(i + 1), cp.getPosition(i + 2));
-	//		curve.extend(subCurve);
-	//	}	
-	//	return curve;
-	//}
+	Points lerp() {
+		Points finalCurve;
+		Points subCurve;
+
+		for(int i = numElements() - 3; i >= 1; i--)
+		{
+			subCurve = catmullRomLerp(i - 1, i, i + 1, i + 2);
+			finalCurve.extend(subCurve);
+		}
+		return finalCurve;
+	}
 
 	int lineLerp(int n1, int n2, float t)
 	{
-		int diff = n2 - n1;
-
-		return n1 + (diff * t);
+		int d = n2 - n1;
+		return (float) d*t + n1;
 	}
 
 	// Derrived from https://stackoverflow.com/questions/37642168/how-to-convert-quadratic-bezier-curve-code-into-cubic-bezier-curve/37642695#37642695
@@ -202,6 +226,8 @@ public:
 			float currY = lineLerp(ym, yn, i);
 			curve.add(Point(glm::vec2(currX, currY), glm::vec4(0.9, 0.3, 0.3, 1)));		
 		}
+
+		return curve;
 	}
 	   
 
@@ -209,16 +235,19 @@ public:
 
 //----------------------------------------------------------------------------
 
+
 // OpenGL initialization
+enum objects { cpID, curveID };
+GLuint VAO[2];
+
 GLuint shader;
 GLuint vPosition;
 GLuint vColor;
-GLuint VAO[2];
-enum objects { ControlPointsID, CurvePointsID };
 
 // Data 
 Points cp;
 Points curve;
+
 
 void
 init()
@@ -226,7 +255,6 @@ init()
 	// Load shaders and use the resulting shader program
 	shader = InitShader("vshader.glsl", "fshader.glsl");
 	glUseProgram(shader);
-
 	vPosition = glGetAttribLocation(shader, "vPosition");
 	vColor = glGetAttribLocation(shader, "vColor");
 	   
@@ -245,36 +273,38 @@ display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// need to bind things here ...
-	// make a loop to draw multiple curve segments 
-
 	// Load geomerty to GPU			
-	cp.extractGeometry().load(VAO[ControlPointsID], vPosition, vColor);
-	curve.extractGeometry().load(VAO[CurvePointsID], vPosition, vColor);
-
-
-	glBindVertexArray(VAO[ControlPointsID]);
+	cp.extractGeometry().load(VAO[cpID], vPosition, vColor);
+	curve.extractGeometry().load(VAO[curveID], vPosition, vColor);
+	
+	glBindVertexArray(VAO[cpID]);
 	{
 		glPointSize(10.0f);
 		glDrawElements(GL_POINTS, cp.numElements(), GL_UNSIGNED_INT, 0);
 	}
 
-	glBindVertexArray(VAO[CurvePointsID]);
+	glBindVertexArray(VAO[curveID]);
 	{
 		glPointSize(6.0f);
 		glDrawElements(GL_POINTS, curve.numElements(), GL_UNSIGNED_INT, 0);
 	}
 
-
-
 	glutSwapBuffers();
-
-
 }
 
 //----------------------------------------------------------------------------
 
 int mode;
+bool reset = false;
+
+int curr = 1;
+
+Points curveSegment;
+bool drawing = false;
+bool erasing = false;
+int tempPoints = 0;
+int tempMax = 1 / 0.02;
+
 void
 keyboard(unsigned char key, int x, int y)
 {
@@ -288,21 +318,22 @@ keyboard(unsigned char key, int x, int y)
 		if (mode > 2) {
 			mode = 0;
 		}
+		break;	
+	case 'r':
+		//reset = true;
+
+		if (cp.numElements() > 3) {			
+			curve = Points();
+			curveSegment = cp.lerp();
+			drawing = true;
+		}
+
 		break;
 	}
 }
 
 
 //----------------------------------------------------------------------------
-
-int curr = 1;
-
-bool drawing = false;
-bool erasing = false;
-
-Points curveSegment;
-int tempPoints = 0;
-int tempMax = 1 / 0.02;
 
 void
 mouse(int button, int state, int x, int y)
@@ -313,17 +344,19 @@ mouse(int button, int state, int x, int y)
 		{
 			float windowX = -1.0f + x * 2.0f / glutGet(GLUT_WINDOW_WIDTH);
 			float windowY = 1.0f + y * 2.0f / -glutGet(GLUT_WINDOW_HEIGHT);
-
+						
+			Point p(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0));
+								
 			if (cp.numElements() == 0) { // put extra 1st point
-				cp.add(Point(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0)));
-				cp.add(Point(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0)));
+				cp.add(p);
+				cp.add(p);
 			}
 			else if (cp.numElements() == 2) { // 3 points is not enough to make a curve
-				cp.add(Point(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0)));
+				cp.add(p);
 			}
 			else if (cp.numElements() == 3) { // 5 points is enough to make 2 curves
-				cp.add(Point(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0)));
-				cp.add(Point(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0)));
+				cp.add(p);
+				cp.add(p);
 
 				curveSegment = cp.catmullRomLerp(curr, curr + 1, curr + 2, curr + 3);
 				curveSegment.extend(cp.catmullRomLerp(curr - 1, curr, curr + 1, curr + 2));
@@ -333,15 +366,17 @@ mouse(int button, int state, int x, int y)
 				tempPoints = 0;
 				tempMax = curveSegment.numElements();
 			}
-			else if (cp.numElements() > 3) {	// the last point is also a control point					
-				cp.add(Point(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0)));
-				cp.add(Point(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0)));
+			else if (cp.numElements() > 3) {	// the last point is also a cp point					
+				cp.add(p);
+				cp.add(p);
 				curveSegment = cp.catmullRomLerp(curr, curr + 1, curr + 2, curr + 3);
 				cp.pop();
+				
 				drawing = true;
 				tempPoints = 0;
 				tempMax = curveSegment.numElements();
-			}
+			}			
+
 			display();
 
 			//std::cout << "x=" << x << "\ty=" << y << "\n";						
@@ -413,7 +448,6 @@ update(void)
 
 	}
 }
-
 //----------------------------------------------------------------------------
 
 void
