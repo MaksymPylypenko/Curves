@@ -156,7 +156,6 @@ Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 	return curve;
 }
 
-// Article https://tiborstanko.sk/teaching/geo-num-2016/tp3.html
 Points Points::bSplineLerp(int i0, int i1, int i2, int i3) {
 	glm::vec2 a = getPosition(i0);
 	glm::vec2 b = getPosition(i1);
