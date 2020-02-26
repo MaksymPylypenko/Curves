@@ -151,7 +151,7 @@ mouse(int button, int state, int x, int y)
 		case GLUT_RIGHT_BUTTON:
 		{		
 			if (cp.numElements() > 3) {
-				pointsToErase = 1.0 / 0.01;
+				pointsToErase = 1.0/0.005; // 1.0 / 0.001
 				erasing = true;
 			}
 
@@ -172,26 +172,27 @@ mouse(int button, int state, int x, int y)
 void
 update(void)
 {
-	int pointsPerUpdate = 10; 
+	int pointsPerUpdate = 35; 
 
 	if (interpolation) {
-		if (curveSegment.numElements() > pointsPerUpdate) {
-			for (int i = 0; i < pointsPerUpdate; i++) 
-			{
-				curve.add(curveSegment.pop());				
-			}			
-			bind();
+		int i = 0;
+		while (i < pointsPerUpdate)
+		{
+			if (curveSegment.numElements() > 0 ) {
+				curve.add(curveSegment.pop());
+			} 
+			else {
+				interpolation = false;
+			} 
+			i++;
 		}
-		else {
-			interpolation = false;			
-		}
-	}
-
+		bind();			
+	}	
 	if (erasing) {		
 		int i = 0;
 		while(i<pointsPerUpdate)
 		{			
-			if (pointsToErase > 0)
+			if (pointsToErase >= 0)
 			{
 				curve.pop();		
 				pointsToErase--;

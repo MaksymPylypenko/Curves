@@ -60,7 +60,7 @@ Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 	glm::vec2 d = getPosition(i3);
 
 	Points curve;
-	for (float t = 1; t > 0; t -= 0.01f)
+	for (float t = 1; t > 0; t -= 0.005f)
 	{
 		float tSq = t * t;
 		float tQu = tSq * t;
