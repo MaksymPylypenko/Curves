@@ -1,8 +1,7 @@
 // Based on: http://www.cs.unm.edu/~angel/BOOK/INTERACTIVE_COMPUTER_GRAPHICS/SIXTH_EDITION/CODE/CHAPTER03/WINDOWS_VERSIONS/example2.cpp
 // Modified to isolate the main program and use GLM
 
- #include "common.h"
-
+#include "common.h"
 #include <iostream>
 
 // Create a NULL-terminated string by reading the provided file
@@ -109,7 +108,7 @@ main( int argc, char **argv )
 {
    glutInit( &argc, argv );
    glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
-   glutInitWindowSize( 700, 700 );
+   glutInitWindowSize( 712, 712 );
    glutInitContextVersion( 3, 2 );
    glutInitContextProfile( GLUT_CORE_PROFILE );
    glutCreateWindow( WINDOW_TITLE );
@@ -126,5 +125,4 @@ main( int argc, char **argv )
    
    glutMainLoop();
    return 0;
-
 }
