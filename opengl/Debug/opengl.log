@@ -1,3 +1,3 @@
 ﻿  run.cpp
-F:\Desktop\Graphics A2\src\run.cpp(261,13): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-  opengl.vcxproj -> F:\Desktop\Graphics A2\\build\opengl.exe
+F:\Documents\GitHub\Curves\src\run.cpp(97,13): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  opengl.vcxproj -> F:\Documents\GitHub\Curves\\build\opengl.exe

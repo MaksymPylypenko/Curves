@@ -24,12 +24,24 @@
     <ClInclude Include="..\src\common.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\geometry.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\points.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\run.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\points.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

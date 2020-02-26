@@ -13,12 +13,8 @@ const char* WINDOW_TITLE = "curves";
 const double FRAME_RATE_MS = 1000.0 / 60.0;
 
 //----------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------
-
-
 // OpenGL initialization
-enum objects { cpID, curveID };
+enum objects { ControlPointsID, CurvePointsID };
 GLuint VAO[2];
 
 GLuint shader;
@@ -61,9 +57,6 @@ init()
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 }
-
-
-
 
 
 //----------------------------------------------------------------------------
@@ -119,12 +112,6 @@ keyboard(unsigned char key, int x, int y)
 		break;	
 	case 'r':
 		//reset = true;
-
-		if (cp.numElements() > 3) {			
-			curve = Points();
-			curveSegment = cp.lerp();
-			drawing = true;
-		}
 
 		break;
 	}
