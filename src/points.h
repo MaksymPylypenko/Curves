@@ -20,17 +20,21 @@ public:
 
 // Holds a sequence of points (e.g control points or points that form a curve)
 class Points {
+private:
+	Points catmullRomLerp(int i0, int i1, int i2, int i3);
+	Points bezierLerp(int i0, int i1, int i2, int i3);
 public:
 	std::vector<Point> points;
+
 	void add(Point p);
 	Point pop();
 	glm::vec2 getPosition(int i);
 	int numElements();
 	void extend(Points b);
-	Geometry extractGeometry();
-	Points catmullRomLerp(int i0, int i1, int i2, int i3);
-	int lineLerp(int positionsSize, int colorsSize, float t);
-	Points BezierLerp(int i0, int i1, int i2, int i3);
+	Geometry extractGeometry();	
+	Points lerp(int type);
+	Points lerp(int i0, int i1, int i2, int i3, int type);
+	Points lerp(Point, int type);
 };
 
 

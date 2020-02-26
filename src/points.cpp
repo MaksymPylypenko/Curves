@@ -6,6 +6,7 @@ Point::Point(glm::vec2 position, glm::vec4 color)
 	this->color = color;
 }
 
+
 void Points::add(Point p)
 {
 	points.push_back(p);
@@ -59,7 +60,7 @@ Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 	glm::vec2 d = getPosition(i3);
 
 	Points curve;
-	for (float t = 1; t > 0; t -= 0.02f)
+	for (float t = 1; t > 0; t -= 0.01f)
 	{
 		float tSq = t * t;
 		float tQu = tSq * t;
@@ -77,17 +78,47 @@ Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 	return curve;
 }
 
-//Points RecursiveLerp(Points cp) {
-//	Points curve;
-//	for (int i = 1; i < cp.numElements()-1; i++) {
-//		Points subCurve = Lerp(cp.getPosition(i - 1), cp.getPosition(i), cp.getPosition(i + 1), cp.getPosition(i + 2));
-//		curve.extend(subCurve);
-//	}	
-//	return curve;
-//}
+
+Points Points:: lerp(int type) {
+	Points finalCurve;
+	for (int i = points.size()-3; i > 0; i--) {
+		Points subCurve = lerp(i - 1, i, i + 1, i + 2, type);
+		finalCurve.extend(subCurve);
+	}	
+	return finalCurve;
+}
 
 
-int Points::lineLerp(int positionsSize, int colorsSize, float t)
+Points Points::lerp(int i0, int i1, int i2, int i3, int type) {
+	if (type == 0) {
+		return catmullRomLerp(i0, i1, i2, i3);
+	}
+	else {
+		return bezierLerp(i0, i1, i2, i3);
+	}
+}
+
+Points Points::lerp(Point newPoint, int type) {
+	add(newPoint);
+	int i = points.size()-3; // interpolation starts at this point
+	if (i > 0) {
+		if (type == 0) {
+			return catmullRomLerp(i - 1, i, i + 1, i + 2);
+		}
+		else if (type == 1) {
+			return bezierLerp(i - 1, i, i + 1, i + 2);
+		}
+	}
+	else {
+		return Points();
+	}
+
+}
+
+// -------------------------------------------
+// Custom lerps
+
+float lineLerp(int positionsSize, int colorsSize, float t)
 {
 	int diff = colorsSize - positionsSize;
 
@@ -95,7 +126,7 @@ int Points::lineLerp(int positionsSize, int colorsSize, float t)
 }
 
 // Derrived from https://stackoverflow.com/questions/37642168/how-to-convert-quadratic-bezier-curve-code-into-cubic-bezier-curve/37642695#37642695
-Points Points::BezierLerp(int i0, int i1, int i2, int i3) {
+Points Points::bezierLerp(int i0, int i1, int i2, int i3) {
 
 	glm::vec2 a = getPosition(i0);
 	glm::vec2 b = getPosition(i1);

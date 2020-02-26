@@ -60,7 +60,6 @@ init()
 
 
 //----------------------------------------------------------------------------
-// Called every frame 
 
 void
 display(void)
@@ -86,34 +85,43 @@ display(void)
 //----------------------------------------------------------------------------
 
 int mode;
-bool reset = false;
-
-int curr = 1;
 
 Points curveSegment;
-bool drawing = false;
+bool interpolation = false;
 bool erasing = false;
-int tempPoints = 0;
-int tempMax = 1 / 0.02;
+int pointsToErase = 0;
 
 void
 keyboard(unsigned char key, int x, int y)
 {
-	switch (key) {
-	case 033: // Escape Key
-	case 'q': case 'Q':
-		exit(EXIT_SUCCESS);
-		break;
-	case ' ':  // hold
-		mode++;
-		if (mode > 2) {
-			mode = 0;
-		}
-		break;	
-	case 'r':
-		//reset = true;
+	if(!interpolation){	
+		switch (key) {
+		case 033: // Escape Key
+		case 'q': case 'Q':
+			exit(EXIT_SUCCESS);
+			break;
+		case ' ':  // hold
+			mode++;
+			if (mode > 1) {
+				mode = 0;
+			}
 
-		break;
+			if (cp.numElements() > 3)
+			{
+				curve = Points();
+				curveSegment = cp.lerp(mode);
+				interpolation = true;
+			}
+			break;	
+		case 'r':
+			if (cp.numElements() > 3)
+			{
+				curve = Points();
+				curveSegment = cp.lerp(mode);
+				interpolation = true;
+			}
+			break;
+		}
 	}
 }
 
@@ -123,7 +131,7 @@ keyboard(unsigned char key, int x, int y)
 void
 mouse(int button, int state, int x, int y)
 {
-	if (state == GLUT_DOWN && drawing == false && erasing == false) {
+	if (state == GLUT_DOWN && interpolation == false && erasing == false) {
 		switch (button) {
 		case GLUT_LEFT_BUTTON:
 		{
@@ -131,65 +139,26 @@ mouse(int button, int state, int x, int y)
 			float windowY = 1.0f + y * 2.0f / -glutGet(GLUT_WINDOW_HEIGHT);
 						
 			Point p(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0));
-								
-			if (cp.numElements() == 0) { // put extra 1st point
-				cp.add(p);
-				cp.add(p);
-			}
-			else if (cp.numElements() == 2) { // 3 points is not enough to make a curve
-				cp.add(p);
-			}
-			else if (cp.numElements() == 3) { // 5 points is enough to make 2 curves
-				cp.add(p);
-				cp.add(p);
-
-				curveSegment = cp.catmullRomLerp(curr, curr + 1, curr + 2, curr + 3);
-				curveSegment.extend(cp.catmullRomLerp(curr - 1, curr, curr + 1, curr + 2));
-				cp.pop();
-
-				drawing = true;
-				tempPoints = 0;
-				tempMax = curveSegment.numElements();
-
-		/*		Geometry geometry = curveSegment.extractGeometry();
-				for (float t = 0; t < 1; t += 0.01) {
-					geometry.subData(t).load(VAO[CurvePointsID], vPosition, vColor);
-					display();
-				}*/
-			}
-			else if (cp.numElements() > 3) {	// the last point is also a cp point					
-				cp.add(p);
-				cp.add(p);
-				curveSegment = cp.catmullRomLerp(curr, curr + 1, curr + 2, curr + 3);
-				cp.pop();
-				
-				drawing = true;
-				tempPoints = 0;
-				tempMax = curveSegment.numElements();
-			}			
-			bind();
-
-			//std::cout << "x=" << x << "\ty=" << y << "\n";						
+							
+			curveSegment = cp.lerp(p,mode);				
+			if(curveSegment.numElements() > 0)
+			{					
+				interpolation = true;				
+			}	
+			bind();				
 			break;
 		}
 		case GLUT_RIGHT_BUTTON:
-		{
-			if (cp.numElements() > 0) {
-				if (cp.numElements() > 3) { // remove last curve
-					cp.pop();
-					erasing = true;					
-				}
-				else if (cp.numElements() == 3) { // remove last 2 curves
-					cp.pop();
-					erasing = true;					
-				}
-				else if (cp.numElements() == 2) { // remove redundant starting point
-					cp.pop();
-					cp.pop();					
-					curr = 1;
-				}
-				bind();
+		{		
+			if (cp.numElements() > 3) {
+				pointsToErase = 1.0 / 0.01;
+				erasing = true;
 			}
+
+			if (cp.numElements() > 0) {
+				cp.pop();
+			}
+		
 			break;
 		}
 		case GLUT_MIDDLE_BUTTON: break;
@@ -198,42 +167,42 @@ mouse(int button, int state, int x, int y)
 }
 
 //----------------------------------------------------------------------------
+// Called every frame 
 
 void
 update(void)
 {
-	if (drawing) {
-		if (curveSegment.numElements() > 0) {
-			Point p = curveSegment.pop();
-			curve.add(p);
-			tempPoints++;
+	int pointsPerUpdate = 10; 
+
+	if (interpolation) {
+		if (curveSegment.numElements() > pointsPerUpdate) {
+			for (int i = 0; i < pointsPerUpdate; i++) 
+			{
+				curve.add(curveSegment.pop());				
+			}			
 			bind();
 		}
 		else {
-			drawing = false;
-			curr++;
+			interpolation = false;			
 		}
 	}
 
-	if (erasing) {
-		if (tempPoints > 0 && curve.numElements() > 0)
-		{
-			curve.pop();
-			bind();
-			tempPoints--;
-		}
-		else {
-			erasing = false;
-			curr--;
-			if (cp.numElements() == 4) {
-				tempPoints = tempMax * 2;
+	if (erasing) {		
+		int i = 0;
+		while(i<pointsPerUpdate)
+		{			
+			if (pointsToErase > 0)
+			{
+				curve.pop();		
+				pointsToErase--;
 			}
-			else {
-				tempPoints = tempMax;
-			}
-
+			else
+			{
+				erasing = false;
+			}			
+			i++;
 		}
-
+		bind();		
 	}
 }
 //----------------------------------------------------------------------------
