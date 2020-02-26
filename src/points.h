@@ -23,6 +23,7 @@ class Points {
 private:
 	Points catmullRomLerp(int i0, int i1, int i2, int i3);
 	Points bezierLerp(int i0, int i1, int i2, int i3);
+	Points bSplineLerp(int i0, int i1, int i2, int i3);
 public:
 	std::vector<Point> points;
 

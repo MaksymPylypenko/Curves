@@ -102,7 +102,7 @@ keyboard(unsigned char key, int x, int y)
 			break;
 		case ' ':  // hold
 			mode++;
-			if (mode > 1) {
+			if (mode > 2) {
 				mode = 0;
 			}
 
@@ -140,10 +140,12 @@ mouse(int button, int state, int x, int y)
 						
 			Point p(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0));
 							
+			std::cout << "X=" << windowX << "\nY=" << windowY << "\n\n";
 			curveSegment = cp.lerp(p,mode);				
 			if(curveSegment.numElements() > 0)
 			{					
-				interpolation = true;				
+				interpolation = true;		
+				std::cout << "Interpolating"<< "\n\n";
 			}	
 			bind();				
 			break;
@@ -153,10 +155,12 @@ mouse(int button, int state, int x, int y)
 			if (cp.numElements() > 3) {
 				pointsToErase = 1.0/0.005; // 1.0 / 0.001
 				erasing = true;
+				std::cout << "Erasing" << "\n\n";
 			}
 
 			if (cp.numElements() > 0) {
 				cp.pop();
+				std::cout << "Control point removed" << "\n\n";
 			}
 		
 			break;

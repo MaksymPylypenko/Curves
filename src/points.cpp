@@ -52,6 +52,83 @@ Geometry Points::extractGeometry() {
 	return Geometry(positions, colors, indices);
 }
 
+
+Points Points:: lerp(int type) {
+	Points finalCurve;
+	for (int i = points.size()-3; i > 0; i--) {
+		Points subCurve = lerp(i - 1, i, i + 1, i + 2, type);
+		finalCurve.extend(subCurve);
+	}	
+	return finalCurve;
+}
+
+
+Points Points::lerp(int i0, int i1, int i2, int i3, int type) {		
+	if (type == 0) {
+		return catmullRomLerp(i0, i1, i2, i3);
+	}
+	else if (type == 1) {
+		return bezierLerp(i0, i1, i2, i3);
+	}
+	else {
+		return bSplineLerp(i0, i1, i2, i3);
+	}
+}
+
+Points Points::lerp(Point newPoint, int type) {
+	add(newPoint);
+	int i = points.size()-3; // interpolation starts at this point
+	if (i > 0) {
+		return lerp(i - 1, i, i + 1, i + 2, type);	
+	}
+	else {
+		return Points();
+	}
+
+}
+
+// -------------------------------------------
+// Custom lerps
+
+float lineLerp(float a, float b, float t)
+{
+	return b + ((a-b) * t);
+}
+
+// Derrived from https://stackoverflow.com/questions/37642168/how-to-convert-quadratic-bezier-curve-code-into-cubic-bezier-curve/37642695#37642695
+Points Points::bezierLerp(int i0, int i1, int i2, int i3) {
+
+	glm::vec2 a = getPosition(i0);
+	glm::vec2 b = getPosition(i1);
+	glm::vec2 c = getPosition(i2);
+	glm::vec2 d = getPosition(i3);
+
+	Points curve;
+	for (float i = 0; i < 1; i += 0.005)
+	{
+		// The Green Lines
+		float xa = lineLerp(a.x, b.x, i);
+		float ya = lineLerp(a.y, b.y, i);
+		float xb = lineLerp(b.x, c.x, i);
+		float yb = lineLerp(b.y, c.y, i);
+		float xc = lineLerp(c.x, d.x, i);
+		float yc = lineLerp(c.y, d.y, i);
+
+		// The Blue Line
+		float xm = lineLerp(xa, xb, i);
+		float ym = lineLerp(ya, yb, i);
+		float xn = lineLerp(xb, xc, i);
+		float yn = lineLerp(yb, yc, i);
+
+		// The Black Dot
+		float currX = lineLerp(xm, xn, i);
+		float currY = lineLerp(ym, yn, i);
+		curve.add(Point(glm::vec2(currX, currY), glm::vec4(0.9, 0.3, 0.3, 1)));
+	}
+	return curve;
+}
+
+
 Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 
 	glm::vec2 a = getPosition(i0);
@@ -79,81 +156,28 @@ Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 }
 
 
-Points Points:: lerp(int type) {
-	Points finalCurve;
-	for (int i = points.size()-3; i > 0; i--) {
-		Points subCurve = lerp(i - 1, i, i + 1, i + 2, type);
-		finalCurve.extend(subCurve);
-	}	
-	return finalCurve;
-}
-
-
-Points Points::lerp(int i0, int i1, int i2, int i3, int type) {
-	if (type == 0) {
-		return catmullRomLerp(i0, i1, i2, i3);
-	}
-	else {
-		return bezierLerp(i0, i1, i2, i3);
-	}
-}
-
-Points Points::lerp(Point newPoint, int type) {
-	add(newPoint);
-	int i = points.size()-3; // interpolation starts at this point
-	if (i > 0) {
-		if (type == 0) {
-			return catmullRomLerp(i - 1, i, i + 1, i + 2);
-		}
-		else if (type == 1) {
-			return bezierLerp(i - 1, i, i + 1, i + 2);
-		}
-	}
-	else {
-		return Points();
-	}
-
-}
-
-// -------------------------------------------
-// Custom lerps
-
-float lineLerp(int positionsSize, int colorsSize, float t)
-{
-	int diff = colorsSize - positionsSize;
-
-	return positionsSize + (diff * t);
-}
-
-// Derrived from https://stackoverflow.com/questions/37642168/how-to-convert-quadratic-bezier-curve-code-into-cubic-bezier-curve/37642695#37642695
-Points Points::bezierLerp(int i0, int i1, int i2, int i3) {
-
-	glm::vec2 a = getPosition(i0);
-	glm::vec2 b = getPosition(i1);
-	glm::vec2 c = getPosition(i2);
-	glm::vec2 d = getPosition(i3);
-
+Points Points::bSplineLerp(int i0, int i1, int i2, int i3) {
 	Points curve;
-	for (float i = 0; i < 1; i += 0.01)
-	{
-		// The Green Lines
-		float xa = lineLerp(a.x, b.x, i);
-		float ya = lineLerp(a.y, b.y, i);
-		float xb = lineLerp(b.x, c.x, i);
-		float yb = lineLerp(b.y, c.y, i);
-		float xc = lineLerp(c.x, d.x, i);
-		float yc = lineLerp(c.y, d.y, i);
 
-		// The Blue Line
-		float xm = lineLerp(xa, xb, i);
-		float ym = lineLerp(ya, yb, i);
-		float xn = lineLerp(xb, xc, i);
-		float yn = lineLerp(yb, yc, i);
-
-		// The Black Dot
-		float currX = lineLerp(xm, xn, i);
-		float currY = lineLerp(ym, yn, i);
-		curve.add(Point(glm::vec2(currX, currY), glm::vec4(0.9, 0.3, 0.3, 1)));
-	}
 	return curve;
 }
+
+//>> > def bspline(x, t, c, k) :
+//	...    n = len(t) - k - 1
+//
+//	...    return sum(c[i] * B(x, k, i, t) for i in range(n))
+//
+//
+// void B(x,int k, i, t) :
+//	    if k == 0 :
+//	       return 1.0 if t[i] <= x < t[i + 1] else 0.0
+//	    if t[i + k] == t[i] :
+//	       c1 = 0.0
+//	    else :
+//	       c1 = (x - t[i]) / (t[i + k] - t[i]) * B(x, k - 1, i, t)
+//	     if t[i + k + 1] == t[i + 1] :
+//	       c2 = 0.0
+//	    else :
+//	       c2 = (t[i + k + 1] - x) / (t[i + k + 1] - t[i + 1]) * B(x, k - 1, i + 1, t)
+//	    return c1 + c2
+//	>> >
