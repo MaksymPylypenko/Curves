@@ -25,6 +25,27 @@ GLuint vColor;
 Points cp;
 Points curve;
 
+int mode;
+
+Points curveSegment;
+bool interpolation = false;
+bool erasing = false;
+int pointsToErase = 0;
+
+void
+printMode() {
+	if (mode == 0) {
+		std::cout << "Catmull Rom\n";
+	}
+	else if (mode == 1) {
+		std::cout << "Quadratic Bezier\n";
+	}
+	else if (mode == 2) {
+		std::cout << "B-spline\n";
+	}
+}
+
+
 //----------------------------------------------------------------------------
 // Called when the state of geometry is changed
 
@@ -56,6 +77,9 @@ init()
 	   
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
+
+	std::cout << "Mode = ";
+	printMode();
 }
 
 
@@ -84,13 +108,6 @@ display(void)
 
 //----------------------------------------------------------------------------
 
-int mode;
-
-Points curveSegment;
-bool interpolation = false;
-bool erasing = false;
-int pointsToErase = 0;
-
 void
 keyboard(unsigned char key, int x, int y)
 {
@@ -105,13 +122,14 @@ keyboard(unsigned char key, int x, int y)
 			if (mode > 2) {
 				mode = 0;
 			}
-
 			if (cp.numElements() > 3)
 			{
 				curve = Points();
 				curveSegment = cp.lerp(mode);
 				interpolation = true;
 			}
+			std::cout << "\nMode = ";
+			printMode();
 			break;	
 		case 'r':
 			if (cp.numElements() > 3)
@@ -140,12 +158,12 @@ mouse(int button, int state, int x, int y)
 						
 			Point p(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0));
 							
-			std::cout << "X=" << windowX << "\nY=" << windowY << "\n\n";
+			std::cout << "\nX=" << windowX << "\tY=" << windowY << "\n";
 			curveSegment = cp.lerp(p,mode);				
 			if(curveSegment.numElements() > 0)
 			{					
-				interpolation = true;		
-				std::cout << "Interpolating"<< "\n\n";
+				interpolation = true;					
+				std::cout << "\nInterpolating a curve segment\n";							
 			}	
 			bind();				
 			break;
@@ -153,14 +171,14 @@ mouse(int button, int state, int x, int y)
 		case GLUT_RIGHT_BUTTON:
 		{		
 			if (cp.numElements() > 3) {
-				pointsToErase = 1.0/0.005; // 1.0 / 0.001
+				pointsToErase = 1.0/T; // 1.0 / 0.001
 				erasing = true;
-				std::cout << "Erasing" << "\n\n";
+				std::cout << "\nErasing . . ." << "\n";
 			}
 
 			if (cp.numElements() > 0) {
 				cp.pop();
-				std::cout << "Control point removed" << "\n\n";
+				std::cout << "\nControl point removed" << "\n";
 			}
 		
 			break;
@@ -176,7 +194,7 @@ mouse(int button, int state, int x, int y)
 void
 update(void)
 {
-	int pointsPerUpdate = 35; 
+	const int pointsPerUpdate = 35; 
 
 	if (interpolation) {
 		int i = 0;

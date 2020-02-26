@@ -104,7 +104,7 @@ Points Points::bezierLerp(int i0, int i1, int i2, int i3) {
 	glm::vec2 d = getPosition(i3);
 
 	Points curve;
-	for (float i = 0; i < 1; i += 0.005)
+	for (float i = 0; i < 1; i += T)
 	{
 		// The Green Lines
 		float xa = lineLerp(a.x, b.x, i);
@@ -137,7 +137,7 @@ Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 	glm::vec2 d = getPosition(i3);
 
 	Points curve;
-	for (float t = 1; t > 0; t -= 0.005f)
+	for (float t = 1; t > 0; t -= T)
 	{
 		float tSq = t * t;
 		float tQu = tSq * t;
