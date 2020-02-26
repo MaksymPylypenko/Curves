@@ -89,6 +89,7 @@ Points Points::lerp(Point newPoint, int type) {
 
 // -------------------------------------------
 // Custom lerps
+// http://www.joshbarczak.com/blog/?p=730
 
 float lineLerp(float a, float b, float t)
 {
@@ -155,29 +156,28 @@ Points Points::catmullRomLerp(int i0, int i1, int i2, int i3) {
 	return curve;
 }
 
-
+// Article https://tiborstanko.sk/teaching/geo-num-2016/tp3.html
 Points Points::bSplineLerp(int i0, int i1, int i2, int i3) {
-	Points curve;
+	glm::vec2 a = getPosition(i0);
+	glm::vec2 b = getPosition(i1);
+	glm::vec2 c = getPosition(i2);
+	glm::vec2 d = getPosition(i3);
 
+	Points curve;
+	for (float t = 1; t > 0; t -= T)
+	{
+		float tSq = t * t;
+		float tQu = tSq * t;
+				
+		float q1 = -tQu + 3.0f * tSq - 3.0f * t + 1;
+		float q2 = 3.0f * tQu - 6.0f * tSq + 4;
+		float q3 = -3 * tQu + 3.0f * tSq + 3.0f * t + 1;
+		float q4 = tQu;
+
+		float currX = (a.x * q1 + b.x * q2 + c.x * q3 + d.x * q4) / 6.0f;
+		float currY = (a.y * q1 + b.y * q2 + c.y * q3 + d.y * q4) / 6.0f;
+
+		curve.add(Point(glm::vec2(currX, currY), glm::vec4(0.9, 0.3, 0.3, 1)));
+	}
 	return curve;
 }
-
-//>> > def bspline(x, t, c, k) :
-//	...    n = len(t) - k - 1
-//
-//	...    return sum(c[i] * B(x, k, i, t) for i in range(n))
-//
-//
-// void B(x,int k, i, t) :
-//	    if k == 0 :
-//	       return 1.0 if t[i] <= x < t[i + 1] else 0.0
-//	    if t[i + k] == t[i] :
-//	       c1 = 0.0
-//	    else :
-//	       c1 = (x - t[i]) / (t[i + k] - t[i]) * B(x, k - 1, i, t)
-//	     if t[i + k + 1] == t[i + 1] :
-//	       c2 = 0.0
-//	    else :
-//	       c2 = (t[i + k + 1] - x) / (t[i + k + 1] - t[i + 1]) * B(x, k - 1, i + 1, t)
-//	    return c1 + c2
-//	>> >
