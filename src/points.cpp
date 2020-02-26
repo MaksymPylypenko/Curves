@@ -88,15 +88,10 @@ Points Points::lerp(Point newPoint, int type) {
 }
 
 // -------------------------------------------
-// Custom lerps
+// Weighted combination of the Bernstein basis polynomials
 // http://www.joshbarczak.com/blog/?p=730
 
-float lineLerp(float a, float b, float t)
-{
-	return b + ((a-b) * t);
-}
 
-// Derrived from https://stackoverflow.com/questions/37642168/how-to-convert-quadratic-bezier-curve-code-into-cubic-bezier-curve/37642695#37642695
 Points Points::bezierLerp(int i0, int i1, int i2, int i3) {
 
 	glm::vec2 a = getPosition(i0);
@@ -105,25 +100,23 @@ Points Points::bezierLerp(int i0, int i1, int i2, int i3) {
 	glm::vec2 d = getPosition(i3);
 
 	Points curve;
-	for (float i = 0; i < 1; i += T)
+
+	// Fast
+	for (float t = 1; t > 0; t -= T)
 	{
-		// The Green Lines
-		float xa = lineLerp(a.x, b.x, i);
-		float ya = lineLerp(a.y, b.y, i);
-		float xb = lineLerp(b.x, c.x, i);
-		float yb = lineLerp(b.y, c.y, i);
-		float xc = lineLerp(c.x, d.x, i);
-		float yc = lineLerp(c.y, d.y, i);
+		float tSq = t * t;
+		float tQu = tSq * t;
+		float oneMinusT = 1.0f - t;
+		float oneMinusTSq = oneMinusT * oneMinusT;
+	
+		float q1 = oneMinusTSq * oneMinusT;
+		float q2 = 3.0f * t * oneMinusTSq;
+		float q3 = 3.0f * tSq * oneMinusT;
+		float q4 = tQu;
 
-		// The Blue Line
-		float xm = lineLerp(xa, xb, i);
-		float ym = lineLerp(ya, yb, i);
-		float xn = lineLerp(xb, xc, i);
-		float yn = lineLerp(yb, yc, i);
+		float currX = a.x * q1 + b.x * q2 + c.x * q3 + d.x * q4;
+		float currY = a.y * q1 + b.y * q2 + c.y * q3 + d.y * q4;
 
-		// The Black Dot
-		float currX = lineLerp(xm, xn, i);
-		float currY = lineLerp(ym, yn, i);
 		curve.add(Point(glm::vec2(currX, currY), glm::vec4(0.9, 0.3, 0.3, 1)));
 	}
 	return curve;
