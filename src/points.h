@@ -31,7 +31,8 @@ public:
 	std::vector<Point> points;
 
 	void add(Point p);
-	Point pop();
+	void erase(int type);
+	Point pop();	
 	glm::vec2 getPosition(int i);
 	int numElements();
 	void extend(Points b);
