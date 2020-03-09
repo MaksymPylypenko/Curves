@@ -12,7 +12,8 @@
 #include <vector>
 
 const float T = 0.005; // increment step for linear interpolation
-const bool FULL_INTERPOLATION = true;
+
+enum CurveType { CatmullRom, Bezier, Bspline };
 
 class Point {
 public:

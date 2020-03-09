@@ -25,22 +25,24 @@ GLuint vColor;
 Points cp;
 Points curve;
 
-int mode;
+int mode = CatmullRom;
 
 Points curveSegment;
 bool interpolation = false;
 bool erasing = false;
 int pointsToErase = 0;
 
+
+
 void
 printMode() {
-	if (mode == 0) {
+	if (mode == CatmullRom) {
 		std::cout << "Catmull Rom\n";
 	}
-	else if (mode == 1) {
+	else if (mode == Bezier) {
 		std::cout << "Quadratic Bezier\n";
 	}
-	else if (mode == 2) {
+	else if (mode == Bspline) {
 		std::cout << "B-spline\n";
 	}
 }
@@ -111,20 +113,20 @@ display(void)
 void
 keyboard(unsigned char key, int x, int y)
 {
-	if(!interpolation){	
+	if(!interpolation && !erasing){	
 		switch (key) {
 		case 033: // Escape Key
 		case 'q': case 'Q':
 			exit(EXIT_SUCCESS);
 			break;
-		case ' ':  // hold
+		case ' ':  // change
 			mode++;
 			if (mode > 2) {
 				mode = 0;
 			}
 			if (cp.numElements() > 3)
 			{
-				curve = Points();
+				curve = Points();				
 				curveSegment = cp.lerp(mode);
 				interpolation = true;				
 			}
@@ -135,7 +137,7 @@ keyboard(unsigned char key, int x, int y)
 			if (cp.numElements() > 2)
 			{
 				curve = Points();
-				curveSegment = cp.lerp(mode);
+				curveSegment = cp.lerp(mode);				
 				interpolation = true;
 			}
 			break;
@@ -143,7 +145,49 @@ keyboard(unsigned char key, int x, int y)
 	}
 }
 
+void drawToPoint(Point p) {	
+	curveSegment = cp.lerp(p, mode);
+	if (curveSegment.numElements() > 0)
+	{
+		interpolation = true;
+		if (mode == CatmullRom) {
+			if (cp.numElements() > 3) { // remove previous curve segment					
+				curve.erase(1.0 / T);
+			}
+		}
+		std::cout << "\nInterpolating a curve segment\n";
+	}
+	bind();
+}
 
+
+void eraseLastPoint() {
+	int minCP = 3;
+	bool shouldErase = true;
+	if (mode == CatmullRom) {
+		minCP = 1;
+	}
+
+	if (mode == Bezier) {
+		if (cp.numElements()% 3 == 1) {
+			shouldErase = true;
+		}		
+		else {
+			shouldErase = false;
+		}
+	}
+
+	if (shouldErase && cp.numElements() > minCP) {
+		pointsToErase = 1.0 / T; // 1.0 / 0.001
+		erasing = true;
+		std::cout << "\nErasing . . ." << "\n";
+	}
+
+	if (cp.numElements() > 0) {
+		cp.pop();
+		std::cout << "\nControl point removed" << "\n";
+	}
+}
 //----------------------------------------------------------------------------
 
 void
@@ -156,41 +200,15 @@ mouse(int button, int state, int x, int y)
 			float windowX = -1.0f + x * 2.0f / glutGet(GLUT_WINDOW_WIDTH);
 			float windowY = 1.0f + y * 2.0f / -glutGet(GLUT_WINDOW_HEIGHT);
 						
-			Point p(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0));
-							
 			std::cout << "\nX=" << windowX << "\tY=" << windowY << "\n";
-			curveSegment = cp.lerp(p,mode);				
-			if(curveSegment.numElements() > 0)
-			{					
-				interpolation = true;		
-				if (FULL_INTERPOLATION) {
-					if (cp.numElements() > 3) { // remove previous curve segment					
-						curve.erase(1.0 / T);
-					}
-				}
-				std::cout << "\nInterpolating a curve segment\n";							
-			}	
-			bind();				
+			Point p(glm::vec2(windowX, windowY), glm::vec4(0.1, 0.1, 0.1, 1.0));
+			drawToPoint(p);
+
 			break;
 		}
 		case GLUT_RIGHT_BUTTON:
 		{		
-			int minCP = 3;
-			if (FULL_INTERPOLATION) {
-				minCP = 1;
-			}
-
-			if (cp.numElements() > minCP) {
-				pointsToErase = 1.0/T; // 1.0 / 0.001
-				erasing = true;
-				std::cout << "\nErasing . . ." << "\n";
-			}
-
-			if (cp.numElements() > 0) {
-				cp.pop();
-				std::cout << "\nControl point removed" << "\n";
-			}
-		
+			eraseLastPoint();
 			break;
 		}
 		case GLUT_MIDDLE_BUTTON: break;

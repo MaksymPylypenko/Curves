@@ -6,7 +6,7 @@
 #  include <OpenGL/gl.h>
 #  include <GLUT/glut.h>
 #  pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#  define glutInitDisplayMode(X) glutInitDisplayMode( (X) | GLUT_3_2_CORE_PROFILE )
+#  define glutInitDisplaycurveType(X) glutInitDisplaycurveType( (X) | GLUT_3_2_CORE_PROFILE )
 #  define glutInitContextVersion(X,Y)
 #  define glutInitContextProfile(X)
 #else // non-Mac OS X operating systems
