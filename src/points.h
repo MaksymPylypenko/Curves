@@ -12,6 +12,7 @@
 #include <vector>
 
 const float T = 0.005; // increment step for linear interpolation
+const bool FULL_INTERPOLATION = true;
 
 class Point {
 public:

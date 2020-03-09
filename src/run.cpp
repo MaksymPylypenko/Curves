@@ -132,7 +132,7 @@ keyboard(unsigned char key, int x, int y)
 			printMode();
 			break;	
 		case 'r':
-			if (cp.numElements() > 3)
+			if (cp.numElements() > 2)
 			{
 				curve = Points();
 				curveSegment = cp.lerp(mode);
@@ -163,8 +163,10 @@ mouse(int button, int state, int x, int y)
 			if(curveSegment.numElements() > 0)
 			{					
 				interpolation = true;		
-				if (cp.numElements() > 3) { // remove previous curve segment					
-					curve.erase(1.0/T);
+				if (FULL_INTERPOLATION) {
+					if (cp.numElements() > 3) { // remove previous curve segment					
+						curve.erase(1.0 / T);
+					}
 				}
 				std::cout << "\nInterpolating a curve segment\n";							
 			}	
@@ -173,7 +175,12 @@ mouse(int button, int state, int x, int y)
 		}
 		case GLUT_RIGHT_BUTTON:
 		{		
-			if (cp.numElements() > 1) {
+			int minCP = 3;
+			if (FULL_INTERPOLATION) {
+				minCP = 1;
+			}
+
+			if (cp.numElements() > minCP) {
 				pointsToErase = 1.0/T; // 1.0 / 0.001
 				erasing = true;
 				std::cout << "\nErasing . . ." << "\n";

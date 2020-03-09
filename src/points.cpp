@@ -63,10 +63,13 @@ Points Points:: lerp(int type) {
 
 	int i = points.size() - 3;
 
-	if (i >= 1) { // add additional last point
-		Points subCurve = lerp(i, i+1, i + 2, i + 2, type);
-		finalCurve.extend(subCurve);
+	if (FULL_INTERPOLATION) {
+		if (i >= 0) { // add additional last point
+			Points subCurve = lerp(i, i + 1, i + 2, i + 2, type);
+			finalCurve.extend(subCurve);
+		}
 	}
+	
 
 	while (i >= 1) {
 		Points subCurve = lerp(i - 1, i, i + 1, i + 2, type);
@@ -74,9 +77,11 @@ Points Points:: lerp(int type) {
 		i--;
 	}	
 
-	if (i == 0) { // add additional 1st point
-		Points subCurve = lerp(i, i, i + 1, i + 2, type);
-		finalCurve.extend(subCurve);
+	if (FULL_INTERPOLATION) {
+		if (i == 0) { // add additional 1st point
+			Points subCurve = lerp(i, i, i + 1, i + 2, type);
+			finalCurve.extend(subCurve);
+		}
 	}
 	return finalCurve;
 }
@@ -101,15 +106,18 @@ Points Points::lerp(Point newPoint, int type) {
 
 	int i = points.size()-3; // interpolation starts at this point
 
-	if (i == 0) { // allow to lerp from the first point
-		 
-		finalCurve.extend(lerp(i, i+1, i + 2, i + 2, type));
-		finalCurve.extend(lerp(i, i, i + 1, i + 2, type));
-		return finalCurve;
+	if (FULL_INTERPOLATION) {
+		if (i == 0) { // allow to lerp from the first point		 
+			finalCurve.extend(lerp(i, i + 1, i + 2, i + 2, type));
+			finalCurve.extend(lerp(i, i, i + 1, i + 2, type));
+			return finalCurve;
+		}
 	}
 
 	if (i > 0) {
-		finalCurve.extend(lerp(i, i + 1, i + 2, i + 2, type));
+		if (FULL_INTERPOLATION) {
+			finalCurve.extend(lerp(i, i + 1, i + 2, i + 2, type));
+		}
 		finalCurve.extend(lerp(i - 1, i, i + 1, i + 2, type));			
 		return finalCurve;
 	}
