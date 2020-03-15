@@ -165,7 +165,7 @@ void eraseLastPoint() {
 	int minCP = 3;
 	bool shouldErase = true;
 	if (mode == CatmullRom) {
-		minCP = 1;
+		minCP = 2;
 	}
 
 	if (mode == Bezier) {
@@ -179,6 +179,9 @@ void eraseLastPoint() {
 
 	if (shouldErase && cp.numElements() > minCP) {
 		pointsToErase = 1.0 / T; // 1.0 / 0.001
+		if (mode == CatmullRom && cp.numElements() == 3) {
+			pointsToErase = 2.0 / T + 1;
+		}
 		erasing = true;
 		std::cout << "\nErasing . . ." << "\n";
 	}
