@@ -12,7 +12,6 @@
 * `Left click` - create a new point and extend the curve smoothly (if enough points)
 * `Right click` - remove the last point and erase the curve smoothly 
 * `R` - redraw the full curve
-* `W`		- subdivide
 * `SPACE`	- change the curve type
 
 ### Curve types
